@@ -1,0 +1,14 @@
+node_modules
+.expo
+dist
+build
+coverage
+package-lock.json
+yarn.lock
+.pnp.*
+.vscode
+.idea
+.DS_Store
+.env
+.env.local
+.env.*.local

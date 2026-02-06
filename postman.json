@@ -1,0 +1,215 @@
+{
+    "info": {
+        "_postman_id": "19e0bd12-0fef-4d17-ba8f-1436d5187eb3",
+        "name": "Social Backend",
+        "description": "Postman collection for Mini Social Feed App backend APIs",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "_exporter_id": "8006254"
+    },
+    "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Signup",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"john\",\n    \"email\": \"john@example.com\",\n    \"password\": \"123456\",\n    \"fcmToken\": \"TEST_FCM_TOKEN\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/signup",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "signup"]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"123456\",\n  \"fcmToken\": \"TEST_FCM_TOKEN\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "login"]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Posts",
+            "item": [
+                {
+                    "name": "Create Post",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"text\": \"Hello from Mini Social App\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/posts",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["posts"]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Feed (Paginated)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/posts?page=1",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["posts"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Feed by Username",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/posts?username=john",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["posts"],
+                            "query": [
+                                {
+                                    "key": "username",
+                                    "value": "john"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Post Detail (with comments)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/posts/{{postId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["posts", "{{postId}}"]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Like / Unlike Post",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/posts/{{postId}}/like",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["posts", "{{postId}}", "like"]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Comment on Post",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"text\": \"Nice post!\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/posts/{{postId}}/comment",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["posts", "{{postId}}", "comment"]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:5000/api"
+        },
+        {
+            "key": "token",
+            "value": ""
+        },
+        {
+            "key": "postId",
+            "value": ""
+        }
+    ]
+}
