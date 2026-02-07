@@ -1,25 +1,34 @@
 const mongoose = require('mongoose');
 
-const commentSchema = new mongoose.Schema(
+const notificationSchema = new mongoose.Schema(
     {
-        text: {
+        title: {
             type: String,
             required: true,
             trim: true,
-            maxlength: 300,
+            maxlength: 120,
         },
 
-        userId: {
+        senderId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: true,
             index: true,
         },
 
-        postId: {
+        receiverId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Post',
+            ref: 'User',
             required: true,
+            index: true,
+        },
+        data: {
+            type: String,
+            default: null,
+        },
+        read: {
+            type: Boolean,
+            default: false,
             index: true,
         },
     },

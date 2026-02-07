@@ -3,19 +3,24 @@ const bcrypt = require('bcryptjs');
 const generateToken = require('../utils/generateToken');
 
 exports.signup = async (req, res) => {
-    const { username, email, password, fcmToken } = req.body;
+    const { name, email, password, fcmToken } = req.body;
     const hash = await bcrypt.hash(password, 10);
     const user = await User.create({
-        username,
+        name,
         email,
+        profileImage: null,
         password: hash,
-        fcmToken
+        gender: null,
+        age: null,
+        bio: null,
+        fcmToken,
     });
+    console.log('user::', user);
     const tokenData = generateToken(user._id);
     res.json({
         success: true,
         token: tokenData.token,
-        expiresAt: tokenData.expiresAt
+        expiresAt: tokenData.expiresAt,
     });
 };
 
@@ -32,7 +37,7 @@ exports.login = async (req, res) => {
     await user.save();
 
     res.json({
-        success: true,        
-        token: generateToken(user._id).token
+        success: true,
+        token: generateToken(user._id).token,
     });
 };
