@@ -6,6 +6,9 @@ Node.js, Express, MongoDB, Firebase FCM
 
 ## Setup
 
+Create a .env file with sample given
+provide below information
+
 npm install
 create .env file
 npm run dev
