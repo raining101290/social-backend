@@ -22,19 +22,26 @@ const notificationSchema = new mongoose.Schema(
             required: true,
             index: true,
         },
-        data: {
+
+        type: {
             type: String,
-            default: null,
+            enum: ['like', 'comment', 'follow', 'system'],
+            required: true,
+            index: true,
         },
+
+        data: {
+            type: mongoose.Schema.Types.Mixed,
+            default: {},
+        },
+
         read: {
             type: Boolean,
             default: false,
             index: true,
         },
     },
-    {
-        timestamps: true,
-        toJSON: { virtuals: true },
-        toObject: { virtuals: true },
-    }
+    { timestamps: true }
 );
+
+module.exports = mongoose.model('Notification', notificationSchema);

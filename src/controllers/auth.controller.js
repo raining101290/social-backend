@@ -15,7 +15,6 @@ exports.signup = async (req, res) => {
         bio: null,
         fcmToken,
     });
-    console.log('user::', user);
     const tokenData = generateToken(user._id);
     res.json({
         success: true,

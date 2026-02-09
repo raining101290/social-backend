@@ -1,15 +1,27 @@
-const admin = require('../config/firebase');
+const Notification = require('../models/Notification');
+const User = require('../models/User');
+const { sendPush } = require('./firebase.service');
 
-module.exports = async (token, title, body) => {
-    try {
-        if (!token) return;
+exports.createNotification = async ({ senderId, receiverId, type, title, data = {} }) => {
+    if (senderId.toString() === receiverId.toString()) return null;
 
-        await admin.messaging().send({
-            token,
-            notification: { title, body },
+    const notification = await Notification.create({
+        senderId,
+        receiverId,
+        type,
+        title,
+        data,
+    });
+
+    const receiver = await User.findById(receiverId).select('fcmToken');
+
+    if (receiver?.fcmToken) {
+        await sendPush(receiver.fcmToken, title, 'Tap to view', {
+            type,
+            ...data,
+            notificationId: notification._id.toString(),
         });
-        console.log('FCM sent →', token.slice(0, 10));
-    } catch (err) {
-        console.error('FCM ERROR:', err.message);
     }
+
+    return notification;
 };

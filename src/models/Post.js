@@ -8,14 +8,12 @@ const postSchema = new mongoose.Schema(
             trim: true,
             maxlength: 500,
         },
-
         userId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: true,
             index: true,
         },
-
         likes: [
             {
                 type: mongoose.Schema.Types.ObjectId,
@@ -29,3 +27,5 @@ const postSchema = new mongoose.Schema(
         toObject: { virtuals: true },
     }
 );
+
+module.exports = mongoose.model('Post', postSchema);

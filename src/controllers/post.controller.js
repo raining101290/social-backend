@@ -1,77 +1,191 @@
 const Post = require('../models/Post');
 const Comment = require('../models/Comment');
-const User = require('../models/User');
-const notify = require('../services/notification.service');
 
 exports.createPost = async (req, res) => {
-  const post = await Post.create({
-    author: req.userId,
-    text: req.body.text
-  });
+    const post = await Post.create({
+        userId: req.userId,
+        body: req.body.text,
+    });
 
-  res.json(post);
+    res.json({
+        success: true,
+        data: post,
+    });
 };
 
 exports.getPosts = async (req, res) => {
-  const page = Number(req.query.page || 1);
-  const limit = 10;
+    const offset = Math.max(0, Number(req.query.offset) || 0);
+    const limit = Math.min(50, Number(req.query.limit) || 10);
 
-  const posts = await Post.find()
-    .populate('author', 'username')
-    .sort({ createdAt: -1 })
-    .skip((page-1)*limit)
-    .limit(limit);
+    const posts = await Post.aggregate([
+        { $sort: { createdAt: -1 } },
+        { $skip: offset },
+        { $limit: limit },
 
-  res.json(posts);
+        // join user
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'userId',
+                foreignField: '_id',
+                as: 'userId',
+            },
+        },
+        { $unwind: '$userId' },
+
+        // join comments for count
+        {
+            $lookup: {
+                from: 'comments',
+                localField: '_id',
+                foreignField: 'postId',
+                as: 'comments',
+            },
+        },
+
+        {
+            $addFields: {
+                commentsCount: { $size: '$comments' },
+            },
+        },
+
+        {
+            $project: {
+                body: 1,
+                likes: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                commentsCount: 1,
+                'userId._id': 1,
+                'userId.name': 1,
+                'userId.profileImage': 1,
+            },
+        },
+    ]);
+
+    const total = await Post.countDocuments();
+
+    res.json({
+        success: true,
+        data: posts,
+        meta: {
+            offset,
+            limit,
+            total,
+            hasMore: offset + posts.length < total,
+        },
+    });
 };
 
 exports.getPostDetail = async (req, res) => {
-  const post = await Post.findById(req.params.id)
-    .populate('author', 'username');
+    const post = await Post.findById(req.params.id)
+        .select('body userId likes createdAt updatedAt')
+        .populate('userId', 'name profileImage');
 
-  const comments = await Comment.find({
-    post: req.params.id
-  }).populate('author', 'username');
+    if (!post) {
+        return res.status(404).json({
+            success: false,
+            message: 'Post not found',
+        });
+    }
 
-  res.json({
-    success: true,
-    data: { post, comments }
-  });
+    const comments = await Comment.find({
+        postId: req.params.id,
+    })
+        .select('text userId createdAt')
+        .populate('userId', 'name profileImage')
+        .sort({ createdAt: -1 });
+
+    res.json({
+        success: true,
+        data: {
+            post,
+            comments,
+        },
+    });
 };
-
 
 exports.likePost = async (req, res) => {
-  const post = await Post.findById(req.params.id);
+    const post = await Post.findById(req.params.id);
 
-  const liked = post.likes.includes(req.userId);
+    if (!post) {
+        return res.status(404).json({
+            success: false,
+            message: 'Post not found',
+        });
+    }
 
-  if (liked)
-    post.likes.pull(req.userId);
-  else
-    post.likes.push(req.userId);
+    const liked = post.likes.includes(req.userId);
 
-  await post.save();
+    if (liked) {
+        post.likes.pull(req.userId);
+    } else {
+        post.likes.push(req.userId);
+    }
 
-  if (!liked && post.author.toString() !== req.userId) {
-    const author = await User.findById(post.author);
-    notify(author.fcmToken, "New Like", "Someone liked your post");
-  }
+    await post.save();
 
-  res.json(post.likes.length);
+    if (!liked && post.userId.toString() !== req.userId) {
+        await createNotification({
+            senderId: req.userId,
+            receiverId: post.userId,
+            type: 'like',
+            title: 'liked your post',
+            data: {
+                postId: post._id,
+            },
+        });
+    }
+
+    res.json({
+        success: true,
+        data: {
+            likesCount: post.likes.length,
+            liked: !liked,
+        },
+    });
 };
 
+const { createNotification } = require('../services/notification.service');
+
 exports.commentPost = async (req, res) => {
-  const comment = await Comment.create({
-    post: req.params.id,
-    author: req.userId,
-    text: req.body.text
-  });
+    if (!req.body.text?.trim()) {
+        return res.status(400).json({
+            success: false,
+            message: 'Comment text required',
+        });
+    }
 
-  const post = await Post.findById(req.params.id);
-  if (post.author.toString() !== req.userId) {
-    const author = await User.findById(post.author);
-    notify(author.fcmToken, "New Comment", req.body.text);
-  }
+    const post = await Post.findById(req.params.id).select('userId');
 
-  res.json(comment);
+    if (!post) {
+        return res.status(404).json({
+            success: false,
+            message: 'Post not found',
+        });
+    }
+
+    const comment = await Comment.create({
+        postId: req.params.id,
+        userId: req.userId,
+        text: req.body.text.trim(),
+    });
+
+    await createNotification({
+        senderId: req.userId,
+        receiverId: post.userId,
+        type: 'comment',
+        title: 'commented on your post',
+        data: {
+            postId: post._id,
+            commentId: comment._id,
+        },
+    });
+
+    const populated = await comment.populate('userId', 'name profileImage');
+
+    res.json({
+        success: true,
+        data: populated,
+    });
 };
