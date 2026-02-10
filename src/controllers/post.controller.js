@@ -1,5 +1,6 @@
 const Post = require('../models/Post');
 const Comment = require('../models/Comment');
+const { createNotification } = require('../services/notification.service');
 
 exports.createPost = async (req, res) => {
     const post = await Post.create({
@@ -105,6 +106,20 @@ exports.getPostDetail = async (req, res) => {
     });
 };
 
+exports.deletePost = async (req, res) => {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) return res.status(404).json({ success: false });
+
+    if (post.userId.toString() !== req.userId) {
+        return res.status(403).json({ success: false });
+    }
+
+    await post.deleteOne();
+
+    res.json({ success: true });
+};
+
 exports.likePost = async (req, res) => {
     const post = await Post.findById(req.params.id);
 
@@ -145,8 +160,6 @@ exports.likePost = async (req, res) => {
         },
     });
 };
-
-const { createNotification } = require('../services/notification.service');
 
 exports.commentPost = async (req, res) => {
     if (!req.body.text?.trim()) {
